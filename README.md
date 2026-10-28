@@ -57,6 +57,7 @@ Add plugins as new files under `nvim/lua/plugins/`.
 ## herdr
 
 - Prefix key: `ctrl+\`
+- `prefix` + `shift+1..9` switches to workspace 1-9
 - `prefix` + `shift+g` opens `wt` in an 80% popup (the built-in `new_worktree` key is disabled)
 
 ## `wt`
