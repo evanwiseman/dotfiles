@@ -23,6 +23,11 @@ list_branches() {
   esac | sort -u
 }
 
+# path of the worktree that has a branch checked out, if any
+worktree_of() {
+  git worktree list --porcelain | awk -v ref="branch refs/heads/$1" '/^worktree /{p=substr($0,10)} $0==ref{print p}'
+}
+
 # picker reload hook: wt --list <local|online|all>
 if [[ ${1:-} == --list ]]; then
   list_branches "${2:-all}"
@@ -60,6 +65,14 @@ if [[ -z $branch ]]; then
   [[ -n $branch ]] || branch=$(sed -n 1p <<<"$out")
 fi
 [[ -n $branch ]] || exit 0
+
+# branch already has a worktree: just open it
+existing=$(worktree_of "$branch")
+if [[ -n $existing ]]; then
+  herdr worktree open --cwd "$root" --path "$existing" --label "$branch" --focus >/dev/null || fail "herdr worktree open failed"
+  exit 0
+fi
+
 path="$wtdir/$branch"
 [[ ! -e $path ]] || fail "$path already exists"
 

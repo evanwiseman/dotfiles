@@ -222,15 +222,40 @@ class TestPicker:
 
 
 @pytest.mark.parametrize("layout", ["normal", "bare"])
-def test_existing_path_fails(sandbox: Sandbox, layout: str) -> None:
+def test_existing_worktree_is_opened(sandbox: Sandbox, layout: str) -> None:
     repo = sandbox.clone_normal() if layout == "normal" else sandbox.clone_bare()
     assert sandbox.wt(repo, "feature").returncode == 0
 
     result = sandbox.wt(repo, "feature")
 
+    assert result.returncode == 0, result.stdout
+    first, second = sandbox.herdr_calls()
+    assert second == first
+
+
+def test_branch_checked_out_in_main_checkout_opens_it(sandbox: Sandbox) -> None:
+    repo = sandbox.clone_normal()
+
+    result = sandbox.wt(repo, "main")
+
+    assert result.returncode == 0, result.stdout
+    assert not (repo / ".worktrees").exists()
+    assert sandbox.herdr_calls() == [
+        ["worktree", "open", "--cwd", str(repo), "--path", str(repo), "--label", "main", "--focus"]
+    ]
+
+
+@pytest.mark.parametrize("layout", ["normal", "bare"])
+def test_leftover_folder_fails(sandbox: Sandbox, layout: str) -> None:
+    repo = sandbox.clone_normal() if layout == "normal" else sandbox.clone_bare()
+    leftover = repo / ".worktrees" / "feature" if layout == "normal" else repo / "feature"
+    leftover.mkdir(parents=True)
+
+    result = sandbox.wt(repo, "feature")
+
     assert result.returncode == 1
     assert "already exists" in result.stdout
-    assert len(sandbox.herdr_calls()) == 1
+    assert sandbox.herdr_calls() == []
 
 
 def test_outside_a_repo_fails(sandbox: Sandbox, tmp_path: Path) -> None:
