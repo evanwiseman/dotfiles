@@ -22,17 +22,10 @@ Optional, used by language extras and `wt` when the project needs them: `node`/`
 
 ### Install
 
-The repo uses the bare layout that `wt` expects (see [`wt`](#wt)), so clone it bare and add a `main` worktree:
-
 ```sh
-mkdir -p ~/dev/github.com/evanwiseman/dotfiles
+git clone https://github.com/evanwiseman/dotfiles.git ~/dev/github.com/evanwiseman/dotfiles
 cd ~/dev/github.com/evanwiseman/dotfiles
-git clone --bare https://github.com/evanwiseman/dotfiles.git .bare
-echo "gitdir: ./.bare" > .git
-git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-git fetch origin
-git worktree add main main
-./main/install.sh
+./install.sh
 ```
 
 `install.sh` symlinks each entry in the table above into place. It is safe to re-run:
@@ -77,6 +70,19 @@ myrepo/
 ├── main/         # worktree
 └── feature-x/    # worktree created by wt
 ```
+
+To set up a repo this way:
+
+```sh
+mkdir myrepo && cd myrepo
+git clone --bare <url> .bare
+echo "gitdir: ./.bare" > .git
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git fetch origin
+git worktree add main main
+```
+
+Then:
 
 ```sh
 wt              # pick a branch with fzf, or type a new name to create one
