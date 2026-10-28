@@ -1,0 +1,16 @@
+onboarding = false
+
+[theme]
+name = "catppuccin"
+auto_switch = false
+
+[keys]
+prefix = "ctrl+\\"
+new_worktree = ""
+
+[[keys.command]]
+key = "prefix+shift+g"
+type = "popup"
+command = "wt"
+width = "80%"
+height = "80%"

@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Create a git worktree at <repo>/<branch> in a bare-layout repo, set it up,
+# and open it as a herdr workspace. Bound to a herdr popup key.
+set -uo pipefail
+
+fail() {
+  echo "error: $*"
+  read -rp "press enter to close" _
+  exit 1
+}
+
+common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || fail "not inside a git repo ($PWD)"
+[[ $(git --git-dir="$common" rev-parse --is-bare-repository) == true ]] || fail "not a bare-layout repo ($PWD)"
+root=$(dirname "$common")
+repo=$(basename "$root")
+
+cd "$root" || fail "cannot cd to $root"
+echo "fetching origin..."
+git fetch -q origin || fail "git fetch failed"
+git symbolic-ref -q refs/remotes/origin/HEAD >/dev/null || git remote set-head origin --auto >/dev/null
+base=$(git symbolic-ref --short refs/remotes/origin/HEAD) || fail "cannot find origin default branch"
+
+branch=${1:-}
+if [[ -z $branch ]]; then
+  # local branches, plus origin branches without a local twin; typing a new name creates it
+  candidates=$({
+    git for-each-ref --format='%(refname:short)' refs/heads
+    git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed -e '/^origin$/d' -e '/^origin\/HEAD$/d' -e 's|^origin/||'
+  } | sort -u)
+  out=$(fzf --print-query --prompt="[$repo] branch> " --header='enter: pick | type a new name to create' <<<"$candidates")
+  rc=$?
+  [[ $rc -le 1 ]] || exit 0
+  branch=$(sed -n 2p <<<"$out")
+  [[ -n $branch ]] || branch=$(sed -n 1p <<<"$out")
+fi
+[[ -n $branch ]] || exit 0
+path="$root/$branch"
+[[ ! -e $path ]] || fail "$path already exists"
+
+if git show-ref -q --verify "refs/heads/$branch"; then
+  git worktree add "$path" "$branch" || fail "git worktree add failed"
+elif git show-ref -q --verify "refs/remotes/origin/$branch"; then
+  git worktree add --track -b "$branch" "$path" "origin/$branch" || fail "git worktree add failed"
+else
+  git worktree add --no-track -b "$branch" "$path" "$base" || fail "git worktree add failed"
+fi
+
+cd "$path" || fail "cannot cd to $path"
+
+# copy .env from the default-branch worktree, else any sibling that has one
+if [[ ! -e .env ]]; then
+  for src in "$root/${base#origin/}/.env" "$root"/*/.env; do
+    [[ -f $src && $src != "$path/.env" ]] && { cp -p "$src" .env; echo "copied .env from $src"; break; }
+  done
+fi
+
+if [[ -f composer.json ]]; then composer install --no-interaction || fail "composer install failed"; fi
+if [[ -f pnpm-lock.yaml ]]; then pnpm install --frozen-lockfile || fail "pnpm install failed"
+elif [[ -f package-lock.json ]]; then npm ci || fail "npm ci failed"
+elif [[ -f yarn.lock ]]; then yarn install --frozen-lockfile || fail "yarn install failed"
+fi
+if [[ -f uv.lock ]]; then uv sync || fail "uv sync failed"; fi
+
+herdr worktree open --cwd "$root" --path "$path" --label "$branch" --focus >/dev/null || fail "herdr worktree open failed"
