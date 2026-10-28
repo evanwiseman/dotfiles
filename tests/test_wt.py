@@ -168,6 +168,32 @@ class TestPicker:
 
         assert sandbox.fzf_candidates() == ["local", "main", "remote-only"]
 
+    def test_hides_branches_deleted_on_origin(self, sandbox: Sandbox) -> None:
+        repo = sandbox.clone_normal()
+        sandbox.git("branch", "--track", "tracked", "origin/remote-only", cwd=repo)
+        sandbox.git("branch", "-D", "remote-only", cwd=sandbox.origin)
+
+        sandbox.wt(repo, fzf_rc=130)
+
+        assert sandbox.fzf_candidates() == ["main"]
+
+    @pytest.mark.parametrize(
+        ("mode", "expected"),
+        [
+            ("local", ["local", "main"]),
+            ("online", ["main", "remote-only"]),
+            ("all", ["local", "main", "remote-only"]),
+        ],
+    )
+    def test_list_modes(self, sandbox: Sandbox, mode: str, expected: list[str]) -> None:
+        repo = sandbox.clone_normal()
+        sandbox.git("branch", "local", cwd=repo)
+
+        result = sandbox.wt(repo, "--list", mode)
+
+        assert result.returncode == 0, result.stdout
+        assert result.stdout.splitlines() == expected
+
     def test_picking_a_branch(self, sandbox: Sandbox) -> None:
         repo = sandbox.clone_normal()
 

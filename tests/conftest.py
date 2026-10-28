@@ -36,13 +36,13 @@ class Sandbox:
         return result.stdout.strip()
 
     def wt(
-        self, cwd: Path, branch: str | None = None, *, fzf_output: str = "", fzf_rc: int = 0
+        self, cwd: Path, *args: str, fzf_output: str = "", fzf_rc: int = 0
     ) -> subprocess.CompletedProcess[str]:
-        """Run wt with a branch argument, or through the (stubbed) fzf picker if None."""
+        """Run wt with arguments (e.g. a branch), or through the (stubbed) fzf picker if none."""
         env = {**self.env, "FZF_OUTPUT": fzf_output, "FZF_RC": str(fzf_rc)}
         # stdin is closed so fail()'s "press enter" prompt returns immediately
         return subprocess.run(
-            [str(WT)] if branch is None else [str(WT), branch],
+            [str(WT), *args],
             cwd=cwd,
             env=env,
             stdin=subprocess.DEVNULL,

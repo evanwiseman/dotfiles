@@ -102,6 +102,8 @@ wt              # pick a branch with fzf, or type a new name to create one
 wt feature-x    # skip the picker
 ```
 
+The picker lists all branches by default. `ctrl-l` shows only local branches, `ctrl-o` only branches on origin (online), and `ctrl-a` goes back to all. Branches deleted on origin are pruned on fetch, and local branches whose upstream was deleted are left out (typing the exact name still opens one).
+
 What it does:
 
 1. Fetches `origin` and finds its default branch.

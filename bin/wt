@@ -11,6 +11,24 @@ fail() {
   exit 1
 }
 
+# branch names for the picker; typing a new name in it creates one
+#   local:  local branches, minus ones whose upstream was deleted on origin
+#   online: branches on origin
+#   all:    both
+list_branches() {
+  case $1 in
+    local) git for-each-ref --format='%(upstream:track)%09%(refname:short)' refs/heads | awk -F'\t' '$1 != "[gone]" { print $2 }' ;;
+    online) git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed -e '/^origin$/d' -e '/^origin\/HEAD$/d' -e 's|^origin/||' ;;
+    *) list_branches local; list_branches online ;;
+  esac | sort -u
+}
+
+# picker reload hook: wt --list <local|online|all>
+if [[ ${1:-} == --list ]]; then
+  list_branches "${2:-all}"
+  exit
+fi
+
 common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || fail "not inside a git repo ($PWD)"
 root=$(dirname "$common")
 repo=$(basename "$root")
@@ -24,18 +42,18 @@ fi
 
 cd "$root" || fail "cannot cd to $root"
 echo "fetching origin..."
-git fetch -q origin || fail "git fetch failed"
+git fetch -q --prune origin || fail "git fetch failed"
 git symbolic-ref -q refs/remotes/origin/HEAD >/dev/null || git remote set-head origin --auto >/dev/null
 base=$(git symbolic-ref --short refs/remotes/origin/HEAD) || fail "cannot find origin default branch"
 
 branch=${1:-}
 if [[ -z $branch ]]; then
-  # local branches, plus origin branches without a local twin; typing a new name creates it
-  candidates=$({
-    git for-each-ref --format='%(refname:short)' refs/heads
-    git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed -e '/^origin$/d' -e '/^origin\/HEAD$/d' -e 's|^origin/||'
-  } | sort -u)
-  out=$(fzf --print-query --prompt="[$repo] branch> " --header='enter: pick | type a new name to create' <<<"$candidates")
+  self=$(printf %q "$(cd "$(dirname "$0")" && pwd)/$(basename "$0")")
+  out=$(list_branches all | fzf --print-query --prompt="[$repo] all> " \
+    --header=$'enter: pick | type a new name to create\nctrl-a: all | ctrl-l: local | ctrl-o: online' \
+    --bind="ctrl-a:reload($self --list all)+change-prompt([$repo] all> )" \
+    --bind="ctrl-l:reload($self --list local)+change-prompt([$repo] local> )" \
+    --bind="ctrl-o:reload($self --list online)+change-prompt([$repo] online> )")
   rc=$?
   [[ $rc -le 1 ]] || exit 0
   branch=$(sed -n 2p <<<"$out")
