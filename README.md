@@ -111,3 +111,14 @@ What it does:
 3. Copies `.env` from the main checkout (normal) or the default-branch worktree (bare), else from any other worktree that has one.
 4. Installs dependencies if it finds `composer.json`, `pnpm-lock.yaml` / `package-lock.json` / `yarn.lock`, or `uv.lock`.
 5. Opens the worktree in herdr and focuses it.
+
+## Tests
+
+`tests/` covers `wt` with pytest. Each test runs the real script against throwaway git repos, with stubbed `herdr` and `fzf` and your git config isolated. Needs [uv](https://docs.astral.sh/uv/):
+
+```sh
+uv run pytest                 # tests
+uv run ruff check tests       # lint
+uv run ruff format tests      # format
+uv run basedpyright           # type check
+```
