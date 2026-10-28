@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Symlink dotfiles into their real locations. Existing non-symlink targets are
 # moved aside to <target>.bak.
+#   ./install.sh              install everything
+#   ./install.sh nvim wt      install only the named parts (nvim, herdr, wt)
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -20,6 +22,25 @@ link() {
   echo "link    $dst -> $src"
 }
 
-link "$here/nvim"              "$HOME/.config/nvim"
-link "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml"
-link "$here/bin/wt"            "$HOME/.local/bin/wt"
+usage() {
+  echo "usage: $0 [nvim] [herdr] [wt]   (no arguments installs all)"
+}
+
+parts=("$@")
+[[ ${#parts[@]} -gt 0 ]] || parts=(nvim herdr wt)
+
+for part in "${parts[@]}"; do
+  case $part in
+    nvim | herdr | wt) ;;
+    -h | --help) usage; exit 0 ;;
+    *) echo "unknown part: $part"; usage; exit 1 ;;
+  esac
+done
+
+for part in "${parts[@]}"; do
+  case $part in
+    nvim) link "$here/nvim" "$HOME/.config/nvim" ;;
+    herdr) link "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml" ;;
+    wt) link "$here/bin/wt" "$HOME/.local/bin/wt" ;;
+  esac
+done

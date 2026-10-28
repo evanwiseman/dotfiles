@@ -28,7 +28,27 @@ cd ~/dev/github.com/evanwiseman/dotfiles
 ./install.sh
 ```
 
-`install.sh` symlinks each entry in the table above into place. It is safe to re-run:
+`install.sh` symlinks each entry in the table above into place. To install only some parts, name them:
+
+```sh
+./install.sh wt          # just the wt script, keep your own nvim and herdr config
+./install.sh nvim herdr  # any combination of nvim, herdr, wt
+```
+
+`wt` only needs the `herdr` binary, not this herdr config. To keep your own herdr keys and still get the `wt` popup, add this to your `~/.config/herdr/config.toml`:
+
+```toml
+[[keys.command]]
+key = "prefix+shift+g"
+type = "popup"
+command = "wt"
+width = "80%"
+height = "80%"
+```
+
+`prefix+shift+g` is herdr's default `new_worktree` key, so either pick another key or set `new_worktree = ""` under `[keys]`.
+
+It is safe to re-run:
 
 - already-correct symlinks are left alone (`ok`)
 - an existing file or directory at the target is moved to `<target>.bak` first (`backup`)
@@ -37,12 +57,12 @@ Then open `nvim` once and let lazy.nvim install plugins.
 
 ### Uninstall
 
-Remove the symlinks and restore any `.bak` copies:
-
 ```sh
-rm ~/.config/nvim ~/.config/herdr/config.toml ~/.local/bin/wt
-# e.g. mv ~/.config/nvim.bak ~/.config/nvim
+./uninstall.sh            # everything
+./uninstall.sh nvim       # or just the named parts
 ```
+
+`uninstall.sh` removes the symlinks `install.sh` made and moves any `<target>.bak` back into place (`restore`). Anything at a target that isn't a symlink into this repo is left alone (`skip`).
 
 ## Neovim
 
