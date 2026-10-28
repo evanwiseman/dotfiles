@@ -61,7 +61,19 @@ Add plugins as new files under `nvim/lua/plugins/`.
 
 ## `wt`
 
-Creates a worktree for a branch and opens it as a herdr workspace. Run it from anywhere inside a **bare-layout** repo:
+Creates a worktree for a branch and opens it as a herdr workspace. Run it from anywhere inside a repo (or any of its worktrees). Where the worktree goes depends on the layout.
+
+**Normal repo:** worktrees go under `.worktrees/`. `wt` adds `/.worktrees/` to `.git/info/exclude`, so they never show up as untracked.
+
+```
+myrepo/
+├── .git/
+├── .worktrees/
+│   └── feature-x/    # worktree created by wt
+└── ...               # main checkout
+```
+
+**Bare-layout repo:** worktrees sit next to each other.
 
 ```
 myrepo/
@@ -71,7 +83,7 @@ myrepo/
 └── feature-x/    # worktree created by wt
 ```
 
-To set up a repo this way:
+To set up a repo in the bare layout:
 
 ```sh
 mkdir myrepo && cd myrepo
@@ -92,10 +104,10 @@ wt feature-x    # skip the picker
 What it does:
 
 1. Fetches `origin` and finds its default branch.
-2. Adds a worktree at `<repo>/<branch>`:
+2. Adds a worktree at `<repo>/.worktrees/<branch>` (normal) or `<repo>/<branch>` (bare):
    - existing local branch → checks it out
    - remote-only branch → creates a tracking branch
    - new name → branches off the origin default branch
-3. Copies `.env` from the default-branch worktree (or any sibling that has one).
+3. Copies `.env` from the main checkout (normal) or the default-branch worktree (bare), else from any other worktree that has one.
 4. Installs dependencies if it finds `composer.json`, `pnpm-lock.yaml` / `package-lock.json` / `yarn.lock`, or `uv.lock`.
 5. Opens the worktree in herdr and focuses it.

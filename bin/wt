@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Create a git worktree at <repo>/<branch> in a bare-layout repo, set it up,
-# and open it as a herdr workspace. Bound to a herdr popup key.
+# Create a git worktree for a branch, set it up, and open it as a herdr
+# workspace. Bound to a herdr popup key.
+#   bare-layout repo: <repo>/<branch>
+#   normal repo:      <repo>/.worktrees/<branch> (kept out of git via info/exclude)
 set -uo pipefail
 
 fail() {
@@ -10,9 +12,15 @@ fail() {
 }
 
 common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || fail "not inside a git repo ($PWD)"
-[[ $(git --git-dir="$common" rev-parse --is-bare-repository) == true ]] || fail "not a bare-layout repo ($PWD)"
 root=$(dirname "$common")
 repo=$(basename "$root")
+if [[ $(git --git-dir="$common" rev-parse --is-bare-repository) == true ]]; then
+  bare=true
+  wtdir=$root
+else
+  bare=false
+  wtdir=$root/.worktrees
+fi
 
 cd "$root" || fail "cannot cd to $root"
 echo "fetching origin..."
@@ -34,8 +42,14 @@ if [[ -z $branch ]]; then
   [[ -n $branch ]] || branch=$(sed -n 1p <<<"$out")
 fi
 [[ -n $branch ]] || exit 0
-path="$root/$branch"
+path="$wtdir/$branch"
 [[ ! -e $path ]] || fail "$path already exists"
+
+if [[ $bare == false ]]; then
+  exclude=$common/info/exclude
+  mkdir -p "$(dirname "$exclude")"
+  grep -qxF '/.worktrees/' "$exclude" 2>/dev/null || echo '/.worktrees/' >>"$exclude"
+fi
 
 if git show-ref -q --verify "refs/heads/$branch"; then
   git worktree add "$path" "$branch" || fail "git worktree add failed"
@@ -47,9 +61,11 @@ fi
 
 cd "$path" || fail "cannot cd to $path"
 
-# copy .env from the default-branch worktree, else any sibling that has one
+# copy .env from the default-branch worktree (the main checkout in a normal
+# repo), else any sibling that has one
+if [[ $bare == true ]]; then main_env=$root/${base#origin/}/.env; else main_env=$root/.env; fi
 if [[ ! -e .env ]]; then
-  for src in "$root/${base#origin/}/.env" "$root"/*/.env; do
+  for src in "$main_env" "$wtdir"/*/.env; do
     [[ -f $src && $src != "$path/.env" ]] && { cp -p "$src" .env; echo "copied .env from $src"; break; }
   done
 fi
