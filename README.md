@@ -2,11 +2,12 @@
 
 Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), and a few helper scripts.
 
-| Path                | Linked to                     | What it is                                      |
-| ------------------- | ----------------------------- | ----------------------------------------------- |
-| `nvim/`             | `~/.config/nvim`              | [LazyVim](https://lazyvim.github.io) config     |
-| `herdr/config.toml` | `~/.config/herdr/config.toml` | herdr config (catppuccin theme, `wt` popup key) |
-| `bin/wt`            | `~/.local/bin/wt`             | Create a git worktree and open it in herdr      |
+| Path                | Linked to                     | What it is                                          |
+| ------------------- | ----------------------------- | --------------------------------------------------- |
+| `nvim/`             | `~/.config/nvim`              | [LazyVim](https://lazyvim.github.io) config         |
+| `herdr/config.toml` | `~/.config/herdr/config.toml` | herdr config (catppuccin theme, `wt` and tab keys)  |
+| `bin/herdr-tabs`    | `~/.local/bin/herdr-tabs`     | Open or close claude, nvim and terminal herdr tabs  |
+| `bin/wt`            | `~/.local/bin/wt`             | Create a git worktree and open it in herdr          |
 
 ## Getting started
 
@@ -16,6 +17,7 @@ Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), and 
 - [Neovim](https://neovim.io) 0.11+ (for LazyVim)
 - [herdr](https://github.com/ogulcancelik/herdr)
 - [fzf](https://github.com/junegunn/fzf) (used by `wt` for branch picking)
+- [jq](https://jqlang.org) (used by `herdr-tabs`)
 - `~/.local/bin` on your `PATH`
 
 Optional, used by language extras and `wt` when the project needs them: `node`/`pnpm`/`npm`/`yarn`, `uv`, `composer`, `clang-format`.
@@ -34,6 +36,8 @@ cd ~/dev/github.com/evanwiseman/dotfiles
 ./install.sh wt          # just the wt script, keep your own nvim and herdr config
 ./install.sh nvim herdr  # any combination of nvim, herdr, wt
 ```
+
+The `herdr` part also links `bin/herdr-tabs`, since the herdr config's tab keys run it.
 
 `wt` only needs the `herdr` binary, not this herdr config. To keep your own herdr keys and still get the `wt` popup, add this to your `~/.config/herdr/config.toml`:
 
@@ -79,6 +83,34 @@ Add plugins as new files under `nvim/lua/plugins/`.
 - Prefix key: `ctrl+\`
 - `prefix` + `shift+1..9` switches to workspace 1-9
 - `prefix` + `shift+g` opens `wt` in an 80% popup (the built-in `new_worktree` key is disabled)
+- `prefix` + `shift+a` adds `claude`, `nvim` and `terminal` tabs (runs `herdr-tabs`)
+- `prefix` + `shift+c` closes those tabs (runs `herdr-tabs close`)
+
+## `herdr-tabs`
+
+Sets up the current herdr workspace for work in the focused pane's directory:
+
+| Tab        | Runs        |
+| ---------- | ----------- |
+| `claude`   | Claude Code |
+| `nvim`     | Neovim      |
+| `terminal` | a shell     |
+
+The new tabs are added after the existing ones, and `claude` gets focus. `herdr-tabs close` closes every tab in the workspace labeled `claude`, `nvim` or `terminal`. It does not ask first, so unsaved nvim changes and a running Claude session are lost.
+
+Both run from herdr keys with `type = "shell"`, which pass in the workspace and the pane directory. To use them with your own herdr config:
+
+```toml
+[[keys.command]]
+key = "prefix+shift+a"
+type = "shell"
+command = "herdr-tabs"
+
+[[keys.command]]
+key = "prefix+shift+c"
+type = "shell"
+command = "herdr-tabs close"
+```
 
 ## `wt`
 
