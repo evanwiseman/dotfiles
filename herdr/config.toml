@@ -15,3 +15,15 @@ type = "popup"
 command = "wt"
 width = "80%"
 height = "80%"
+
+[[keys.command]]
+key = "prefix+shift+a"
+type = "shell"
+command = "herdr-tabs"
+description = "claude, nvim and terminal tabs here"
+
+[[keys.command]]
+key = "prefix+shift+c"
+type = "shell"
+command = "herdr-tabs close"
+description = "close claude, nvim and terminal tabs"

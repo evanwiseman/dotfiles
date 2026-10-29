@@ -43,7 +43,10 @@ done
 for part in "${parts[@]}"; do
   case $part in
     nvim) remove "$here/nvim" "$HOME/.config/nvim" ;;
-    herdr) remove "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml" ;;
+    herdr)
+      remove "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml"
+      remove "$here/bin/herdr-tabs" "$HOME/.local/bin/herdr-tabs"
+      ;;
     wt) remove "$here/bin/wt" "$HOME/.local/bin/wt" ;;
   esac
 done

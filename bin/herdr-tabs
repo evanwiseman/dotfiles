@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Add claude, nvim and terminal tabs to the current herdr workspace, all in the
+# focused pane's directory, or close them again. Bound to herdr keys
+# (type = "shell"), which provide the HERDR_ACTIVE_* variables.
+#   herdr-tabs          open the three tabs
+#   herdr-tabs close    close every tab labeled claude, nvim or terminal
+set -euo pipefail
+
+ws=${HERDR_ACTIVE_WORKSPACE_ID:?run from a herdr key binding}
+dir=${HERDR_ACTIVE_PANE_CWD:-$PWD}
+
+# new tab labeled $1 in $dir (extra args go to tab create); prints its pane id
+new_tab() {
+  herdr tab create --workspace "$ws" --cwd "$dir" --label "$@" | jq -r '.result.root_pane.pane_id'
+}
+
+if [[ ${1:-} == close ]]; then
+  herdr tab list --workspace "$ws" |
+    jq -r '.result.tabs[] | select(.label | IN("claude", "nvim", "terminal")) | .tab_id' |
+    while read -r tab; do herdr tab close "$tab" >/dev/null; done
+  exit
+fi
+
+claude=$(new_tab claude --focus)
+herdr pane run "$claude" claude >/dev/null
+
+nvim=$(new_tab nvim --no-focus)
+herdr pane run "$nvim" nvim >/dev/null
+
+new_tab terminal --no-focus >/dev/null

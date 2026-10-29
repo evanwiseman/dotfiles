@@ -40,7 +40,10 @@ done
 for part in "${parts[@]}"; do
   case $part in
     nvim) link "$here/nvim" "$HOME/.config/nvim" ;;
-    herdr) link "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml" ;;
+    herdr)
+      link "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml"
+      link "$here/bin/herdr-tabs" "$HOME/.local/bin/herdr-tabs"
+      ;;
     wt) link "$here/bin/wt" "$HOME/.local/bin/wt" ;;
   esac
 done
