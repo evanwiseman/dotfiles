@@ -2,7 +2,7 @@
 # Symlink dotfiles into their real locations. Existing non-symlink targets are
 # moved aside to <target>.bak.
 #   ./install.sh              install everything
-#   ./install.sh nvim wt      install only the named parts (nvim, herdr, wt)
+#   ./install.sh nvim wt      install only the named parts (nvim, herdr, wt, hammerspoon)
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -23,15 +23,15 @@ link() {
 }
 
 usage() {
-  echo "usage: $0 [nvim] [herdr] [wt]   (no arguments installs all)"
+  echo "usage: $0 [nvim] [herdr] [wt] [hammerspoon]   (no arguments installs all)"
 }
 
 parts=("$@")
-[[ ${#parts[@]} -gt 0 ]] || parts=(nvim herdr wt)
+[[ ${#parts[@]} -gt 0 ]] || parts=(nvim herdr wt hammerspoon)
 
 for part in "${parts[@]}"; do
   case $part in
-    nvim | herdr | wt) ;;
+    nvim | herdr | wt | hammerspoon) ;;
     -h | --help) usage; exit 0 ;;
     *) echo "unknown part: $part"; usage; exit 1 ;;
   esac
@@ -45,5 +45,6 @@ for part in "${parts[@]}"; do
       link "$here/bin/herdr-tabs" "$HOME/.local/bin/herdr-tabs"
       ;;
     wt) link "$here/bin/wt" "$HOME/.local/bin/wt" ;;
+    hammerspoon) link "$here/hammerspoon/init.lua" "$HOME/.hammerspoon/init.lua" ;;
   esac
 done

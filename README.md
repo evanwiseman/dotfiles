@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), and a few helper scripts.
+Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), [Hammerspoon](https://www.hammerspoon.org), and a few helper scripts.
 
 | Path                | Linked to                     | What it is                                          |
 | ------------------- | ----------------------------- | --------------------------------------------------- |
@@ -8,6 +8,7 @@ Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), and 
 | `herdr/config.toml` | `~/.config/herdr/config.toml` | herdr config (catppuccin theme, `wt` and tab keys)  |
 | `bin/herdr-tabs`    | `~/.local/bin/herdr-tabs`     | Open or close claude, nvim and terminal herdr tabs  |
 | `bin/wt`            | `~/.local/bin/wt`             | Create a git worktree and open it in herdr          |
+| `hammerspoon/init.lua` | `~/.hammerspoon/init.lua`  | Hotkeys to move focus between monitors              |
 
 ## Getting started
 
@@ -18,6 +19,7 @@ Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), and 
 - [herdr](https://github.com/ogulcancelik/herdr)
 - [fzf](https://github.com/junegunn/fzf) (used by `wt` for branch picking)
 - [jq](https://jqlang.org) (used by `herdr-tabs`)
+- [Hammerspoon](https://www.hammerspoon.org) (`brew install --cask hammerspoon`, needs Accessibility permission)
 - `~/.local/bin` on your `PATH`
 
 Optional, used by language extras and `wt` when the project needs them: `node`/`pnpm`/`npm`/`yarn`, `uv`, `composer`, `clang-format`.
@@ -34,7 +36,7 @@ cd ~/dev/github.com/evanwiseman/dotfiles
 
 ```sh
 ./install.sh wt          # just the wt script, keep your own nvim and herdr config
-./install.sh nvim herdr  # any combination of nvim, herdr, wt
+./install.sh nvim herdr  # any combination of nvim, herdr, wt, hammerspoon
 ```
 
 The `herdr` part also links `bin/herdr-tabs`, since the herdr config's tab keys run it.
@@ -57,7 +59,7 @@ It is safe to re-run:
 - already-correct symlinks are left alone (`ok`)
 - an existing file or directory at the target is moved to `<target>.bak` first (`backup`)
 
-Then open `nvim` once and let lazy.nvim install plugins.
+Then open `nvim` once and let lazy.nvim install plugins, and reload the Hammerspoon config (menu bar icon → Reload Config).
 
 ### Uninstall
 
@@ -77,6 +79,10 @@ LazyVim starter with these customizations:
 - `clang-format` for C/C++ via conform.nvim (`nvim/lua/plugins/clang_format.lua`)
 
 Add plugins as new files under `nvim/lua/plugins/`.
+
+## Hammerspoon
+
+`ctrl+alt+←/→/↑/↓` moves focus to the nearest monitor in that direction, picked from where the screens are right now, so it works with any monitor setup. It focuses the topmost window on that monitor and moves the mouse to its center. If that monitor has no windows, it clicks its desktop just under the menu bar so keyboard focus moves there too.
 
 ## herdr
 

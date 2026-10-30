@@ -2,7 +2,7 @@
 # Remove symlinks made by install.sh and restore any <target>.bak it moved aside.
 # Targets that aren't our symlinks are left alone.
 #   ./uninstall.sh            uninstall everything
-#   ./uninstall.sh nvim wt    uninstall only the named parts (nvim, herdr, wt)
+#   ./uninstall.sh nvim wt    uninstall only the named parts (nvim, herdr, wt, hammerspoon)
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -26,15 +26,15 @@ remove() {
 }
 
 usage() {
-  echo "usage: $0 [nvim] [herdr] [wt]   (no arguments uninstalls all)"
+  echo "usage: $0 [nvim] [herdr] [wt] [hammerspoon]   (no arguments uninstalls all)"
 }
 
 parts=("$@")
-[[ ${#parts[@]} -gt 0 ]] || parts=(nvim herdr wt)
+[[ ${#parts[@]} -gt 0 ]] || parts=(nvim herdr wt hammerspoon)
 
 for part in "${parts[@]}"; do
   case $part in
-    nvim | herdr | wt) ;;
+    nvim | herdr | wt | hammerspoon) ;;
     -h | --help) usage; exit 0 ;;
     *) echo "unknown part: $part"; usage; exit 1 ;;
   esac
@@ -48,5 +48,6 @@ for part in "${parts[@]}"; do
       remove "$here/bin/herdr-tabs" "$HOME/.local/bin/herdr-tabs"
       ;;
     wt) remove "$here/bin/wt" "$HOME/.local/bin/wt" ;;
+    hammerspoon) remove "$here/hammerspoon/init.lua" "$HOME/.hammerspoon/init.lua" ;;
   esac
 done
