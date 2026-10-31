@@ -37,6 +37,7 @@ cd ~/dev/github.com/evanwiseman/dotfiles
 ```sh
 ./install.sh wt          # just the wt script, keep your own nvim and herdr config
 ./install.sh nvim herdr  # any combination of nvim, herdr, wt, hammerspoon
+./install.sh --linux     # everything except the macOS-only hammerspoon config
 ```
 
 The `herdr` part also links `bin/herdr-tabs`, since the herdr config's tab keys run it.

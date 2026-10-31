@@ -3,6 +3,7 @@
 # moved aside to <target>.bak.
 #   ./install.sh              install everything
 #   ./install.sh nvim wt      install only the named parts (nvim, herdr, wt, hammerspoon)
+#   ./install.sh --linux      install everything except the macOS-only parts (hammerspoon)
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -23,19 +24,31 @@ link() {
 }
 
 usage() {
-  echo "usage: $0 [nvim] [herdr] [wt] [hammerspoon]   (no arguments installs all)"
+  echo "usage: $0 [--linux] [nvim] [herdr] [wt] [hammerspoon]   (no parts installs all)"
+  echo "  --linux  skip macOS-only parts (hammerspoon)"
 }
 
-parts=("$@")
-[[ ${#parts[@]} -gt 0 ]] || parts=(nvim herdr wt hammerspoon)
-
-for part in "${parts[@]}"; do
-  case $part in
-    nvim | herdr | wt | hammerspoon) ;;
+linux=false
+parts=()
+for arg in "$@"; do
+  case $arg in
+    nvim | herdr | wt | hammerspoon) parts+=("$arg") ;;
+    --linux) linux=true ;;
     -h | --help) usage; exit 0 ;;
-    *) echo "unknown part: $part"; usage; exit 1 ;;
+    *) echo "unknown part: $arg"; usage; exit 1 ;;
   esac
 done
+
+if [[ ${#parts[@]} -eq 0 ]]; then
+  parts=(nvim herdr wt)
+  $linux || parts+=(hammerspoon)
+elif $linux; then
+  for part in "${parts[@]}"; do
+    if [[ $part == hammerspoon ]]; then
+      echo "hammerspoon is macOS-only; drop it or --linux"; exit 1
+    fi
+  done
+fi
 
 for part in "${parts[@]}"; do
   case $part in
