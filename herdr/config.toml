@@ -27,3 +27,11 @@ key = "prefix+shift+c"
 type = "shell"
 command = "herdr-tabs close"
 description = "close claude, nvim and terminal tabs"
+
+[[keys.command]]
+key = "prefix+shift+m"
+type = "popup"
+command = "hp"
+width = "80%"
+height = "80%"
+description = "manage panes: move, swap, close, jump"

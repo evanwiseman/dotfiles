@@ -56,6 +56,7 @@ for part in "${parts[@]}"; do
     herdr)
       link "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml"
       link "$here/bin/herdr-tabs" "$HOME/.local/bin/herdr-tabs"
+      link "$here/bin/hp" "$HOME/.local/bin/hp"
       ;;
     wt) link "$here/bin/wt" "$HOME/.local/bin/wt" ;;
     hammerspoon) link "$here/hammerspoon/init.lua" "$HOME/.hammerspoon/init.lua" ;;

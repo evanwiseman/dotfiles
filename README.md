@@ -7,6 +7,7 @@ Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), [Ham
 | `nvim/`             | `~/.config/nvim`              | [LazyVim](https://lazyvim.github.io) config         |
 | `herdr/config.toml` | `~/.config/herdr/config.toml` | herdr config (catppuccin theme, `wt` and tab keys)  |
 | `bin/herdr-tabs`    | `~/.local/bin/herdr-tabs`     | Open or close claude, nvim and terminal herdr tabs  |
+| `bin/hp`            | `~/.local/bin/hp`             | fzf popup to move, swap, close and jump to panes    |
 | `bin/wt`            | `~/.local/bin/wt`             | Create a git worktree and open it in herdr          |
 | `hammerspoon/init.lua` | `~/.hammerspoon/init.lua`  | Hotkeys to move focus between monitors              |
 
@@ -18,7 +19,8 @@ Personal config for Neovim, [herdr](https://github.com/ogulcancelik/herdr), [Ham
 - [Neovim](https://neovim.io) 0.11+ (for LazyVim)
 - [herdr](https://github.com/ogulcancelik/herdr)
 - [fzf](https://github.com/junegunn/fzf) (used by `wt` for branch picking)
-- [jq](https://jqlang.org) (used by `herdr-tabs`)
+- [jq](https://jqlang.org) (used by `herdr-tabs` and `hp`)
+- `python3` (used by `hp` to focus a pane by id)
 - [Hammerspoon](https://www.hammerspoon.org) (`brew install --cask hammerspoon`, needs Accessibility permission)
 - `~/.local/bin` on your `PATH`
 
@@ -92,6 +94,32 @@ Add plugins as new files under `nvim/lua/plugins/`.
 - `prefix` + `shift+g` opens `wt` in an 80% popup (the built-in `new_worktree` key is disabled)
 - `prefix` + `shift+a` adds `claude`, `nvim` and `terminal` tabs (runs `herdr-tabs`)
 - `prefix` + `shift+c` closes those tabs (runs `herdr-tabs close`)
+- `prefix` + `shift+m` opens `hp` (pane manager) in an 80% popup
+
+## `hp`
+
+An fzf popup listing every pane in every workspace (`id`, workspace, tab, title), with a preview of the selected pane's output. The pane you opened it from is the anchor, marked `*`.
+
+| Key            | Does                                                                 |
+| -------------- | -------------------------------------------------------------------- |
+| `ctrl-h/j/k/l` | move the selected pane(s) left / below / above / right of the anchor |
+| `ctrl-s`       | swap the selected pane with the anchor                               |
+| `ctrl-x`       | close the selected pane(s) and stay in the list (does not ask first) |
+| `enter`        | jump to the pane                                                     |
+| `tab`          | mark several panes                                                   |
+
+Moves work across tabs and workspaces; the popup closes afterwards and focus stays on the anchor. herdr only splits right or down, so left and up split that way and then swap. The anchor itself is never moved or closed. `ctrl-j`/`ctrl-k` replace fzf's own up/down, so use the arrows or `ctrl-n`/`ctrl-p` to move in the list.
+
+To use it with your own herdr config:
+
+```toml
+[[keys.command]]
+key = "prefix+shift+m"
+type = "popup"
+command = "hp"
+width = "80%"
+height = "80%"
+```
 
 ## `herdr-tabs`
 

@@ -46,6 +46,7 @@ for part in "${parts[@]}"; do
     herdr)
       remove "$here/herdr/config.toml" "$HOME/.config/herdr/config.toml"
       remove "$here/bin/herdr-tabs" "$HOME/.local/bin/herdr-tabs"
+      remove "$here/bin/hp" "$HOME/.local/bin/hp"
       ;;
     wt) remove "$here/bin/wt" "$HOME/.local/bin/wt" ;;
     hammerspoon) remove "$here/hammerspoon/init.lua" "$HOME/.hammerspoon/init.lua" ;;

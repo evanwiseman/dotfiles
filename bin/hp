@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# Manage herdr panes from an fzf popup: pull panes from any tab or workspace
+# next to the pane you opened it from (the anchor), swap, close or jump to them.
+# Bound to a herdr popup key, which provides HERDR_ACTIVE_PANE_ID.
+#   ctrl-h/j/k/l  move selected pane(s) left/below/above/right of the anchor
+#   ctrl-s        swap the selected pane with the anchor
+#   ctrl-x        close selected pane(s), stay in the list
+#   enter         jump to the pane
+#   tab           mark several panes
+set -uo pipefail
+
+fail() {
+  echo "error: $*"
+  read -rp "press enter to close" _
+  exit 1
+}
+
+# one row per pane: id, anchor mark, workspace, tab, title (tab separated)
+list_panes() {
+  jq -rn --arg anchor "$1" \
+    --argjson ws "$(herdr workspace list)" \
+    --argjson tabs "$(herdr tab list)" \
+    --argjson panes "$(herdr pane list)" '
+    ($ws.result.workspaces | map({(.workspace_id): .label}) | add) as $w
+    | ($tabs.result.tabs | map({(.tab_id): .label}) | add) as $t
+    | $panes.result.panes[]
+    | [.pane_id, (if .pane_id == $anchor then "*" else " " end),
+       $w[.workspace_id], $t[.tab_id], .terminal_title_stripped]
+    | map(. // "") | join("\t")'
+}
+
+tab_of() {
+  herdr pane get "$1" | jq -er '.result.pane.tab_id'
+}
+
+# move panes next to the anchor; herdr only splits right/down, so left/up
+# split that way and then swap the moved pane with the anchor
+move_panes() {
+  local dir=$1 anchor=$2 split swap=false tab pane
+  shift 2
+  case $dir in
+    right) split=right ;;
+    down) split=down ;;
+    left) split=right swap=true ;;
+    up) split=down swap=true ;;
+    *) fail "unknown direction: $dir" ;;
+  esac
+  tab=$(tab_of "$anchor") || fail "cannot find the tab of $anchor"
+  for pane in "$@"; do
+    [[ $pane == "$anchor" ]] && continue
+    herdr pane move "$pane" --tab "$tab" --target-pane "$anchor" --split "$split" --no-focus >/dev/null ||
+      fail "cannot move $pane"
+    if [[ $swap == true ]]; then
+      herdr pane swap --source-pane "$pane" --target-pane "$anchor" >/dev/null || fail "cannot swap $pane"
+    fi
+  done
+}
+
+# the CLI only focuses by direction, so ask the socket API for pane.focus
+jump_to() {
+  local sock=${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}
+  python3 - "$sock" "$1" <<'EOF' || fail "cannot focus $1"
+import json, socket, sys
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.connect(sys.argv[1])
+req = {"id": "hp", "method": "pane.focus", "params": {"pane_id": sys.argv[2]}}
+s.sendall((json.dumps(req) + "\n").encode())
+reply = json.loads(s.makefile().readline())
+sys.exit("error" in reply)
+EOF
+}
+
+case ${1:-} in
+  --list) list_panes "$2"; exit ;;
+  --preview) herdr pane read "$2" --lines 40; exit ;;
+  --move) shift; move_panes "$@"; exit ;;
+  --swap)
+    [[ $3 == "$2" ]] || herdr pane swap --source-pane "$3" --target-pane "$2" >/dev/null || fail "cannot swap $3"
+    exit
+    ;;
+  --close)
+    anchor=$2
+    shift 2
+    for pane in "$@"; do
+      [[ $pane == "$anchor" ]] || herdr pane close "$pane" >/dev/null || fail "cannot close $pane"
+    done
+    exit
+    ;;
+  --jump) jump_to "$2"; exit ;;
+esac
+
+anchor=${HERDR_ACTIVE_PANE_ID:-}
+[[ -n $anchor ]] || fail "run from a herdr key binding (HERDR_ACTIVE_PANE_ID is not set)"
+
+self=$(printf %q "$(cd "$(dirname "$0")" && pwd)/$(basename "$0")")
+a=$(printf %q "$anchor")
+list_panes "$anchor" | fzf --multi --delimiter=$'\t' --tabstop=4 --prompt='panes> ' \
+  --header=$'ctrl-h/j/k/l  move left/down/up/right of *\nctrl-s swap with *   ctrl-x close   enter jump\ntab mark   ctrl-/ preview   (* = where you opened this)' \
+  --preview="$self --preview {1}" --preview-window=down,40%,follow \
+  --bind="ctrl-/:toggle-preview" \
+  --bind="ctrl-h:become($self --move left $a {+1})" \
+  --bind="ctrl-j:become($self --move down $a {+1})" \
+  --bind="ctrl-k:become($self --move up $a {+1})" \
+  --bind="ctrl-l:become($self --move right $a {+1})" \
+  --bind="ctrl-s:become($self --swap $a {1})" \
+  --bind="ctrl-x:execute($self --close $a {+1})+reload($self --list $a)" \
+  --bind="enter:become($self --jump {1})"
+exit 0
