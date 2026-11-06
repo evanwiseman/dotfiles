@@ -92,7 +92,7 @@ Add plugins as new files under `nvim/lua/plugins/`.
 - Prefix key: `ctrl+\`
 - `prefix` + `shift+1..9` switches to workspace 1-9
 - `prefix` + `shift+g` opens `wt` in an 80% popup (the built-in `new_worktree` key is disabled)
-- `prefix` + `shift+a` adds `claude`, `nvim` and `terminal` tabs (runs `herdr-tabs`)
+- `prefix` + `shift+a` sets up `claude`, `nvim` and `terminal` tabs, reusing the current one (runs `herdr-tabs`)
 - `prefix` + `shift+c` closes those tabs (runs `herdr-tabs close`)
 - `prefix` + `shift+m` opens `hp` (pane manager) in an 80% popup
 
@@ -131,7 +131,7 @@ Sets up the current herdr workspace for work in the focused pane's directory:
 | `nvim`     | Neovim      |
 | `terminal` | a shell     |
 
-The new tabs are added after the existing ones, and `claude` gets focus. `herdr-tabs close` closes every tab in the workspace labeled `claude`, `nvim` or `terminal`. It does not ask first, so unsaved nvim changes and a running Claude session are lost.
+The current tab becomes one of the three: `claude` if its focused pane runs Claude Code, `nvim` if it runs Neovim (detected by the window title), otherwise `terminal`. The other two are added after the existing tabs, unless the workspace already has tabs with those labels, and focus stays on the current tab. `herdr-tabs close` closes every tab in the workspace labeled `claude`, `nvim` or `terminal`. It does not ask first, so unsaved nvim changes and a running Claude session are lost.
 
 Both run from herdr keys with `type = "shell"`, which pass in the workspace and the pane directory. To use them with your own herdr config:
 

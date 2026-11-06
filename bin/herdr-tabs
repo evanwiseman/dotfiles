@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Add claude, nvim and terminal tabs to the current herdr workspace, all in the
-# focused pane's directory, or close them again. Bound to herdr keys
-# (type = "shell"), which provide the HERDR_ACTIVE_* variables.
-#   herdr-tabs          open the three tabs
+# Set up claude, nvim and terminal tabs in the current herdr workspace, all in
+# the focused pane's directory, or close them again. The current tab becomes
+# whichever of the three it is already running (claude, nvim, else terminal)
+# and focus stays on it; the other two are added unless already open. Bound to
+# herdr keys (type = "shell"), which provide the HERDR_ACTIVE_* variables.
+#   herdr-tabs          set up the three tabs
 #   herdr-tabs close    close every tab labeled claude, nvim or terminal
 set -euo pipefail
 
 ws=${HERDR_ACTIVE_WORKSPACE_ID:?run from a herdr key binding}
+tab=${HERDR_ACTIVE_TAB_ID:?run from a herdr key binding}
+pane=${HERDR_ACTIVE_PANE_ID:?run from a herdr key binding}
 dir=${HERDR_ACTIVE_PANE_CWD:-$PWD}
 
 # new tab labeled $1 in $dir (extra args go to tab create); prints its pane id
@@ -17,14 +21,25 @@ new_tab() {
 if [[ ${1:-} == close ]]; then
   herdr tab list --workspace "$ws" |
     jq -r '.result.tabs[] | select(.label | IN("claude", "nvim", "terminal")) | .tab_id' |
-    while read -r tab; do herdr tab close "$tab" >/dev/null; done
+    while read -r t; do herdr tab close "$t" >/dev/null; done
   exit
 fi
 
-claude=$(new_tab claude --focus)
-herdr pane run "$claude" claude >/dev/null
+# what the focused pane runs: herdr detects claude itself, nvim sets the title
+current=$(herdr pane get "$pane" | jq -r '
+  .result.pane |
+  if .agent == "claude" then "claude"
+  elif .terminal_title_stripped == "nvim" then "nvim"
+  else "terminal" end')
+herdr tab rename "$tab" "$current" >/dev/null
 
-nvim=$(new_tab nvim --no-focus)
-herdr pane run "$nvim" nvim >/dev/null
+# labels of the workspace's other tabs, so a second run adds no duplicates
+others=$(herdr tab list --workspace "$ws" |
+  jq -r --arg tab "$tab" '.result.tabs[] | select(.tab_id != $tab) | .label')
 
-new_tab terminal --no-focus >/dev/null
+for label in claude nvim terminal; do
+  [[ $label == "$current" ]] && continue
+  grep -qxF "$label" <<<"$others" && continue
+  new=$(new_tab "$label" --no-focus)
+  [[ $label == terminal ]] || herdr pane run "$new" "$label" >/dev/null
+done
